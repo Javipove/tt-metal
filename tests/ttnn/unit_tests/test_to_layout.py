@@ -244,3 +244,18 @@ def test_int_untilize(device, batch_size, sentence_size):
     output_torch = ttnn.to_torch(output_tt)
 
     assert_with_pcc(torch_input_tensor, output_torch)
+
+
+@pytest.mark.parametrize("shape", [[1, 9, 91, 7, 9]])
+def test_to_layout_page_error(shape, device):
+    torch.manual_seed(2005)
+
+    torch_tensor = torch.rand(shape, dtype=torch.bfloat16)
+
+    input_tensor = ttnn.from_torch(torch_tensor, layout=ttnn.TILE_LAYOUT, device=device)
+    output_tensor = ttnn.to_layout(input_tensor, layout=ttnn.ROW_MAJOR_LAYOUT)
+    output_tensor = ttnn.to_torch(output_tensor)
+
+    torch_output = torch_tensor
+    assert torch_output.shape == output_tensor.shape
+    assert_with_pcc(torch_output, output_tensor, 0.9999)
