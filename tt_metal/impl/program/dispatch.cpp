@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "tt_metal/impl/dispatch/data_collection.hpp"
+#include "tt_metal/impl/dispatch/dispatch_query_manager.hpp"
 
 namespace tt::tt_metal {
 namespace program_dispatch {
@@ -1239,7 +1240,8 @@ void assemble_device_commands(
     // if dispatch_s is enabled have dispatch_d send a semaphore update to dispatch_s (this will include a write barrier
     // on dispatch_d if program is active) if not,  check if the program is active on workers. If active, have
     // dispatch_d issue a write barrier
-    cmd_sequence_sizeB += (device->dispatch_s_enabled() || program_transfer_info.num_active_cores > 0) *
+    cmd_sequence_sizeB += (tt_metal::DispatchQueryManager::instance().dispatch_s_enabled() ||
+                           program_transfer_info.num_active_cores > 0) *
                           hal.get_alignment(HalMemType::HOST);
 
     // either dispatch_s or dispatch_d will send the go signal (go_signal_mcast command)
@@ -1419,7 +1421,7 @@ void assemble_device_commands(
         dispatch_constants::get(dispatch_core_type)
             .get_device_command_queue_addr(CommandQueueDeviceAddrType::DISPATCH_MESSAGE) +
         dispatch_constants::get(dispatch_core_type).get_dispatch_message_offset(sub_device_index);
-    if (device->dispatch_s_enabled()) {
+    if (tt_metal::DispatchQueryManager::instance().dispatch_s_enabled()) {
         // dispatch_d signals dispatch_s to send the go signal, use a barrier if there are cores active
         uint16_t index_bitmask = 0;
         index_bitmask |= 1 << sub_device_index;
