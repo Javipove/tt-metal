@@ -76,6 +76,7 @@ def test_yolov11(device, use_program_cache, reset_seeds):
 
     torch_output = torch_model(torch_input)
     parameters = create_yolov11_model_parameters(torch_model, torch_input, device=device)
+    print("params are ", parameters)
     ttnn_model = ttnn_yolov11.YoloV11(device, parameters)
     ttnn_output = ttnn_model(ttnn_input)
 

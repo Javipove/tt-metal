@@ -388,6 +388,7 @@ class PSABlock(nn.Module):
     def forward(self, x):
         x1 = x
         x = self.attn(x)
+
         x = x1 + x
         x1 = x
         x = self.ffn(x)
@@ -431,6 +432,7 @@ class C2PSA(nn.Module):
     def forward(self, x):
         x = self.cv1(x)
         a, b = x.split((int(self.out_channel[0] / 2), int(self.out_channel[0] / 2)), 1)
+        # torch.save(a,"/home/ubuntu/tt-metal/models/experimental/functional_yolov11/dumps/torch_out.pth")
         x = self.m(b)
         x = self.cv2(torch.cat((a, x), 1))
         return x
