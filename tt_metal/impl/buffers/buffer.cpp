@@ -345,10 +345,6 @@ void Buffer::deallocate_impl() {
 bool Buffer::is_allocated() const {
     auto allocation_status = allocation_status_.load(std::memory_order::relaxed);
 
-    if (device_->can_use_passthrough_scheduling()) {
-        return allocation_status == AllocationStatus::ALLOCATED;
-    }
-
     // For calls from different threads we consider buffer to be allocated even if it's just ALLOCATION_REQUESTED,
     // because once the caller will try to access it, the buffer will already be fully allocated. For the same reason we need to check deallocation_requested_ too.
     bool deallocation_requested = deallocation_requested_.load(std::memory_order::relaxed);
@@ -357,10 +353,6 @@ bool Buffer::is_allocated() const {
 
 uint32_t Buffer::address() const {
     if (allocation_status_.load(std::memory_order::acquire) != AllocationStatus::ALLOCATION_REQUESTED) {
-        return address_;
-    }
-
-    if (device_->can_use_passthrough_scheduling()) {
         return address_;
     }
 
