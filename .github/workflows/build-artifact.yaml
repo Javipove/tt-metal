@@ -139,6 +139,9 @@ jobs:
             if [ "${{ inputs.tracy }}" = "true" ]; then
               build_command="$build_command --enable-profiler"
             fi
+
+            [ -n "$(find . -maxdepth 1 -type d -name 'build*' -print -quit)" ] && { echo "Bad bad bad"; exit 1; }
+
             nice -n 19 $build_command
             ccache -s > build/ccache.stats
       - name: Publish Ccache summary
