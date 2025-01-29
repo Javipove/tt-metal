@@ -9,6 +9,8 @@
 #include <hardware_command_queue.hpp>
 #include <overloaded.hpp>
 #include <trace_buffer.hpp>
+#include <tt-metalium/command_queue_interface.hpp>
+#include <tt-metalium/dispatch_settings.hpp>
 
 #include "tt_metal/impl/buffers/dispatch.hpp"
 #include "tt_metal/impl/debug/watcher_server.hpp"
@@ -90,10 +92,10 @@ CommandQueue::CommandQueue(IDevice* device, uint32_t id, NOC noc_index, uint32_t
     // Set the affinity of the completion queue reader.
     set_device_thread_affinity(this->completion_queue_thread, this->completion_queue_reader_core);
 
-    for (uint32_t i = 0; i < dispatch_constants::DISPATCH_MESSAGE_ENTRIES; i++) {
+    for (uint32_t i = 0; i < DispatchConstants::DISPATCH_MESSAGE_ENTRIES; i++) {
         this->expected_num_workers_completed[i] = 0;
     }
-    reset_config_buffer_mgr(dispatch_constants::DISPATCH_MESSAGE_ENTRIES);
+    reset_config_buffer_mgr(DispatchConstants::DISPATCH_MESSAGE_ENTRIES);
 }
 
 uint32_t CommandQueue::id() const { return this->id_; }
@@ -132,15 +134,15 @@ void CommandQueue::set_go_signal_noc_data_on_dispatch(const vector_memcpy_aligne
 
 uint32_t CommandQueue::get_expected_num_workers_completed_for_sub_device(uint32_t sub_device_index) const {
     TT_FATAL(
-        sub_device_index < dispatch_constants::DISPATCH_MESSAGE_ENTRIES,
-        "Expected sub_device_index to be less than dispatch_constants::DISPATCH_MESSAGE_ENTRIES");
+        sub_device_index < DispatchConstants::DISPATCH_MESSAGE_ENTRIES,
+        "Expected sub_device_index to be less than DispatchConstants::DISPATCH_MESSAGE_ENTRIES");
     return this->expected_num_workers_completed[sub_device_index];
 }
 
 void CommandQueue::set_expected_num_workers_completed_for_sub_device(uint32_t sub_device_index, uint32_t num_workers) {
     TT_FATAL(
-        sub_device_index < dispatch_constants::DISPATCH_MESSAGE_ENTRIES,
-        "Expected sub_device_index to be less than dispatch_constants::DISPATCH_MESSAGE_ENTRIES");
+        sub_device_index < DispatchConstants::DISPATCH_MESSAGE_ENTRIES,
+        "Expected sub_device_index to be less than DispatchConstants::DISPATCH_MESSAGE_ENTRIES");
     this->expected_num_workers_completed[sub_device_index] = num_workers;
 }
 
@@ -170,7 +172,7 @@ void CommandQueue::reset_worker_dispatch_state_on_device(bool reset_launch_msg_s
     DispatcherSelect dispatcher_for_go_signal = DispatcherSelect::DISPATCH_MASTER;
     CoreType dispatch_core_type = dispatch_core_manager::instance().get_dispatch_core_type(device_->id());
     uint32_t dispatch_message_base_addr =
-        dispatch_constants::get(dispatch_core_type)
+        DispatchMemMap::get(dispatch_core_type)
             .get_device_command_queue_addr(CommandQueueDeviceAddrType::DISPATCH_MESSAGE);
     if (reset_launch_msg_state) {
         if (device_->dispatch_s_enabled()) {
@@ -187,9 +189,9 @@ void CommandQueue::reset_worker_dispatch_state_on_device(bool reset_launch_msg_s
         reset_launch_message_read_ptr_go_signal.master_y = (uint8_t)this->virtual_enqueue_program_dispatch_core.y;
         for (uint32_t i = 0; i < num_sub_devices; ++i) {
             reset_launch_message_read_ptr_go_signal.dispatch_message_offset =
-                (uint8_t)dispatch_constants::get(dispatch_core_type).get_dispatch_message_offset(i);
+                (uint8_t)DispatchMemMap::get(dispatch_core_type).get_dispatch_message_offset(i);
             uint32_t dispatch_message_addr =
-                dispatch_message_base_addr + dispatch_constants::get(dispatch_core_type).get_dispatch_message_offset(i);
+                dispatch_message_base_addr + DispatchMemMap::get(dispatch_core_type).get_dispatch_message_offset(i);
             // Wait to ensure that all kernels have completed. Then send the reset_rd_ptr go_signal.
             command_sequence.add_dispatch_go_signal_mcast(
                 expected_num_workers_completed[i],
@@ -208,7 +210,7 @@ void CommandQueue::reset_worker_dispatch_state_on_device(bool reset_launch_msg_s
     // go_signal. Clear the dispatch <--> worker semaphore, since trace starts at 0.
     for (uint32_t i = 0; i < num_sub_devices; ++i) {
         uint32_t dispatch_message_addr =
-            dispatch_message_base_addr + dispatch_constants::get(dispatch_core_type).get_dispatch_message_offset(i);
+            dispatch_message_base_addr + DispatchMemMap::get(dispatch_core_type).get_dispatch_message_offset(i);
         if (device_->distributed_dispatcher()) {
             command_sequence.add_dispatch_wait(
                 false, dispatch_message_addr, expected_num_workers_completed[i], clear_count, false, true, 1);
@@ -635,10 +637,10 @@ void CommandQueue::read_completion_queue() {
                             ZoneScopedN("CompletionQueueReadEvent");
                             uint32_t read_ptr = this->manager.get_completion_queue_read_ptr(this->id_);
                             thread_local static std::vector<uint32_t> dispatch_cmd_and_event(
-                                (sizeof(CQDispatchCmd) + dispatch_constants::EVENT_PADDED_SIZE) / sizeof(uint32_t));
+                                (sizeof(CQDispatchCmd) + DispatchConstants::EVENT_PADDED_SIZE) / sizeof(uint32_t));
                             tt::Cluster::instance().read_sysmem(
                                 dispatch_cmd_and_event.data(),
-                                sizeof(CQDispatchCmd) + dispatch_constants::EVENT_PADDED_SIZE,
+                                sizeof(CQDispatchCmd) + DispatchConstants::EVENT_PADDED_SIZE,
                                 read_ptr,
                                 mmio_device_id,
                                 channel);

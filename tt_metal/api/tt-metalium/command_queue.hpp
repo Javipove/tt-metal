@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "env_lib.hpp"
+#include "dispatch_constants.hpp"
 #include "command_queue_interface.hpp"
 #include "device_command.hpp"
 #include "lock_free_queue.hpp"
@@ -161,7 +162,7 @@ class EnqueueTraceCommand : public Command {
     IDevice* device;
     SystemMemoryManager& manager;
     std::shared_ptr<TraceDescriptor>& descriptor;
-    std::array<uint32_t, dispatch_constants::DISPATCH_MESSAGE_ENTRIES>& expected_num_workers_completed;
+    std::array<uint32_t, DispatchConstants::DISPATCH_MESSAGE_ENTRIES>& expected_num_workers_completed;
     bool clear_count;
     NOC noc_index;
     CoreCoord dispatch_core;
@@ -172,15 +173,14 @@ class EnqueueTraceCommand : public Command {
         SystemMemoryManager& manager,
         std::shared_ptr<TraceDescriptor>& descriptor,
         Buffer& buffer,
-        std::array<uint32_t, dispatch_constants::DISPATCH_MESSAGE_ENTRIES>& expected_num_workers_completed,
+        std::array<uint32_t, DispatchConstants::DISPATCH_MESSAGE_ENTRIES>& expected_num_workers_completed,
         NOC noc_index,
         CoreCoord dispatch_core);
+       void process();
 
-    void process();
+       EnqueueCommandType type() { return EnqueueCommandType::ENQUEUE_TRACE; }
 
-    EnqueueCommandType type() { return EnqueueCommandType::ENQUEUE_TRACE; }
-
-    constexpr bool has_side_effects() { return true; }
+       constexpr bool has_side_effects() { return true; }
 };
 
 class EnqueueTerminateCommand : public Command {
