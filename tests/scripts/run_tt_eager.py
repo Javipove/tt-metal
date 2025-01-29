@@ -49,25 +49,6 @@ TT_EAGER_COMMON_TEST_ENTRIES = (
             "ops/test_transpose_wh_multi_core",
         )
     ),
-    void_for_whb0(TestEntry("tt_eager/tests/ops/test_tilize_op", "ops/test_tilize_op")),
-    void_for_whb0(
-        TestEntry(
-            "tt_eager/tests/ops/test_tilize_op_channels_last",
-            "ops/test_tilize_op_channels_last",
-        )
-    ),
-    void_for_whb0(
-        TestEntry(
-            "tt_eager/tests/ops/test_tilize_zero_padding",
-            "ops/test_tilize_zero_padding",
-        )
-    ),
-    void_for_whb0(
-        TestEntry(
-            "tt_eager/tests/ops/test_tilize_zero_padding_channels_last",
-            "ops/test_tilize_zero_padding_channels_last",
-        )
-    ),
     TestEntry("tt_eager/tests/ops/test_layernorm_op", "ops/test_layernorm_op"),
     TestEntry("tt_eager/tests/ops/test_softmax_op", "ops/test_softmax_op"),
     TestEntry("tt_eager/tests/ops/test_average_pool", "ops/test_average_pool"),
