@@ -182,8 +182,8 @@ find_package(flatbuffers)
 find_package(libuv)
 
 # Bring in UMD and all it's dependencies
-add_subdirectory(tt_metal/third_party/umd)
-
+#add_subdirectory(tt_metal/third_party/umd)
+add_subdirectory(/home/ubuntu/Desktop/javier/tenstorrent_material/tt-umd)
 ############################################################################################################################
 # Constructing interface libs for common compiler flags, header directories, and libraries
 #   These interface libs are linked with PUBLIC scope at lowest common target (tt_metal/common) and at tt_metal_libs level
