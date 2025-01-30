@@ -225,11 +225,11 @@ _Coming soon._
 
 
 
-Convolution as Matrix Multiplication - idea
+Convolution as Matrix Multiplication
 ------------------------------------
 
-We want to perform convolution op on our hardware, but we do not have support for it - there are no instructions that are going to do specific convolution stuff. 
-It turns out that the concept of matrix multiplication can be used to implement convolution. If we look at what we need to do in convolution, it is basically the dot product of the corresponding sliding window values and filter values. This is the same thing we do in matrix multiplication—take the dot product of a row in the first input and a column in the second input. So, if we represent all the sliding window values as rows (with each row being a flattened version of a sliding window), and all the filters as columns in the second input (in the same way as the first input), every value in the output matrix would correspond to the filter applied to a specific window.
+We want to perform convolution op on our hardware, but we do not have support for it - there are no instructions that are going to do specific convolution stuff.
+It turns out that the convolution operation can be transformed into matrix multiplication. If we look at what we need to do in convolution, it is basically the dot product of the corresponding sliding window values and filter values. This is the same thing we do in matrix multiplication—take the dot product of a row in the first input and a column in the second input. So, if we represent all the sliding window values as rows (with each row being a flattened version of a sliding window), and all the filters as columns in the second input (in the same way as the first input), every value in the output matrix would correspond to the filter applied to a specific window.
 
 <img src="media/im2col6.png" style="width:600px;">\
 _Figure 1: Idea of convolution as matrix multiplication_
@@ -605,7 +605,7 @@ data within its own core.
 <img src="media/halo10.png" style="width:200px;">
 
 
-Convolution as Matrix Multiplication - implementation
+Implementation
 ------------------------------------
 
 Consider an example input image with a resolution of $32 \times 32$, meaning both the height $H$ and width $W$ are 32, and each pixel has a channel depth $C$ of 1. Let's use just one image, setting the batch size $N = 1$ for the convolution operation. Therefore, the input tensor for the convolution has dimensions $[1, 32, 32, 1]$, where the order of the dimensions is $[N, H, W, C]$. The last dimension will be padded to 32 before the convolution starts because the unit of calculation is a tile.
@@ -627,7 +627,7 @@ _Figure 1: Filters_
 
 The output of this convolution will be a tensor with dimensions $[1, 32, 32, 1]$ — it has the same dimensions as the input tensor.
 
-The key variables as input to the convolution operation are:
+The key variables as input to the convolution operation in this example are:
 
 
 | **Parameter**       | **Value** |
@@ -655,7 +655,7 @@ The key variables as input to the convolution operation are:
 | - Width ($W_o$)     | 32         |
 | - Channels ($C_o$)  | 1        |
 
-Before the part of the operation where the actual convolution is done, several actions take place (sharding, padding, haloing, etc.). The input to the convolution micro-op is the output of the halo operation. Halo op ensures that every core has everything needed to apply the convolution, which is essentially matrix multiplication.
+Before the part of the operation where the actual convolution is done, several actions take place (sharding, padding, haloing, etc.). The input to the convolution micro-op is the output of the halo operation. Halo op ensures that each core has all data required to apply the convolution operation (which is essentially matrix multiplication) in local L1 memory.
 
 In this case, we will analyze the height-sharded convolution. The output will be $[1, 32, 32, 1]$. Each core will process one row of the output, so 32 cores will be used—one row of output per core. Each core will handle this chunk of the tensor:
 
@@ -665,8 +665,8 @@ _Figure 2: Chunk of data each core is going to process_
 
 Initially, each core will have just a $1 \times 32 \times 32$ shard (an equally divided tensor with padded input channels). However, after adding padding to the tensor (height and width are now 34 instead of 32) and gathering data from other cores, the dimensions will be $[1, 3, 34, 32]$.
 
-We need to reshape tensor to 2D, to be able to apply matmul. First 3 dimensions are squashed into 1 ($N$, $H$, $W$), and $C$ is going to be second dimension of reshaped tensor.
-After reshaping this tensor into 2D, each stick from the tensor in Figure 2 will correspond to one row of the reshaped tensor:
+Conv input is 2D tensor - first 3 dimensions are squashed into 1 ($N$, $H$, $W$), and $C$ is going to be second dimension of reshaped tensor.
+After reshaping this tensor into 2D (this part is not part of conv micro-op, halo output is already 2D tensor), each stick from the tensor in Figure 2 will correspond to one row of the reshaped tensor:
 
 
 <img src="media/im2col2.png" style="width:400px;">\
@@ -686,7 +686,7 @@ The input tensor to the convolution must first be transformed into a matrix such
 
 In matrix multiplication, a dot product is performed between a row in the first input matrix and a column in the second input matrix. This means we need to transform our input into an appropriate matrix for matrix multiplication. Logically, if we look at Figure 2, one window where the filter is applied is one "box" (e.g., from $a_{0,0,0}$ to $a_{2,2,31}$). We need to store that data in one row of the transformed matrix so that when we apply the dot product of that row with the filter (weight matrix), we get the result of applying the filter to the input window.
 
-This is the job of the reader kernel. The reader kernel rearranges input data into a buffer (CB) that will be consumed by the compute kernel, in a way that enables matrix multiplication. Specifically, each row in this matrix is a flattened version of the input elements from each kernel window.
+This is the job of the activation reader kernel. The activation reader kernel rearranges input data into a buffer (CB) that will be consumed by the compute kernel, in a way that enables matrix multiplication. Specifically, each row in this matrix is a flattened version of the input elements from each kernel window.
 
 Looking at both Figure 2 and Figure 3, we can see that the data for one row in the transformed matrix is not placed continuously in the input. For the first window, we take the first 3 elements, then skip the next 31 elements, and take the next 3 elements, and so on. For each row of the transformed matrix, we select which sticks (input elements) to use by choosing the starting point and applying the appropriate offsets.
 
