@@ -55,14 +55,14 @@ enum class EnqueueCommandType {
 string EnqueueCommandTypeToString(EnqueueCommandType ctype);
 
 class Command {
-   public:
+public:
     Command() {}
     virtual void process() {};
     virtual EnqueueCommandType type() = 0;
 };
 
 class EnqueueProgramCommand : public Command {
-   private:
+private:
     uint32_t command_queue_id;
     IDevice* device;
     NOC noc_index;
@@ -79,7 +79,7 @@ class EnqueueProgramCommand : public Command {
     // TODO: There will be multiple ids once programs support spanning multiple sub_devices
     SubDeviceId sub_device_id = SubDeviceId{0};
 
-   public:
+public:
     EnqueueProgramCommand(
         uint32_t command_queue_id,
         IDevice* device,
@@ -101,7 +101,7 @@ class EnqueueProgramCommand : public Command {
 };
 
 class EnqueueRecordEventCommand : public Command {
-   private:
+private:
     uint32_t command_queue_id;
     IDevice* device;
     NOC noc_index;
@@ -112,7 +112,7 @@ class EnqueueRecordEventCommand : public Command {
     bool clear_count;
     bool write_barrier;
 
-   public:
+public:
     EnqueueRecordEventCommand(
         uint32_t command_queue_id,
         IDevice* device,
@@ -132,7 +132,7 @@ class EnqueueRecordEventCommand : public Command {
 };
 
 class EnqueueWaitForEventCommand : public Command {
-   private:
+private:
     uint32_t command_queue_id;
     IDevice* device;
     SystemMemoryManager& manager;
@@ -140,7 +140,7 @@ class EnqueueWaitForEventCommand : public Command {
     CoreType dispatch_core_type;
     bool clear_count;
 
-   public:
+public:
     EnqueueWaitForEventCommand(
         uint32_t command_queue_id,
         IDevice* device,
@@ -156,7 +156,7 @@ class EnqueueWaitForEventCommand : public Command {
 };
 
 class EnqueueTraceCommand : public Command {
-   private:
+private:
     uint32_t command_queue_id;
     Buffer& buffer;
     IDevice* device;
@@ -166,7 +166,8 @@ class EnqueueTraceCommand : public Command {
     bool clear_count;
     NOC noc_index;
     CoreCoord dispatch_core;
-   public:
+
+public:
     EnqueueTraceCommand(
         uint32_t command_queue_id,
         IDevice* device,
@@ -176,20 +177,21 @@ class EnqueueTraceCommand : public Command {
         std::array<uint32_t, DispatchConstants::DISPATCH_MESSAGE_ENTRIES>& expected_num_workers_completed,
         NOC noc_index,
         CoreCoord dispatch_core);
-       void process();
 
-       EnqueueCommandType type() { return EnqueueCommandType::ENQUEUE_TRACE; }
+    void process();
 
-       constexpr bool has_side_effects() { return true; }
+    EnqueueCommandType type() { return EnqueueCommandType::ENQUEUE_TRACE; }
+
+    constexpr bool has_side_effects() { return true; }
 };
 
 class EnqueueTerminateCommand : public Command {
-   private:
+private:
     uint32_t command_queue_id;
     IDevice* device;
     SystemMemoryManager& manager;
 
-   public:
+public:
     EnqueueTerminateCommand(uint32_t command_queue_id, IDevice* device, SystemMemoryManager& manager);
 
     void process();
