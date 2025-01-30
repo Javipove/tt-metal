@@ -5,6 +5,12 @@ if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tt_metal/third_party/umd/CMakeLists.t
     message(FATAL_ERROR "Missing submodules.  Run: git submodule update --init --recursive")
 endif()
 
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)")
+    set (X86 TRUE)
+else ()
+    set (X86 FALSE)
+endif ()
+
 ############################################
 # Project setup
 ############################################
@@ -170,6 +176,11 @@ if(NOT NUMA_LIBRARY)
     message(FATAL_ERROR "NUMA library not found")
 endif()
 
+#NOT SURE IF THIS IS NEEDED
+find_package(nng)
+find_package(flatbuffers)
+find_package(libuv)
+
 # Bring in UMD and all it's dependencies
 add_subdirectory(tt_metal/third_party/umd)
 
@@ -197,10 +208,10 @@ add_compile_options(
     -Wswitch
     -Wuninitialized
     -Wno-unused-parameter
-    -mavx2
     -fPIC
     -fvisibility-inlines-hidden
     -fno-lto # FIXME: This seems to be here for ttnn; it should go to TTNN, then.
+    "$<$<BOOL:${X86}>:-mavx2>"
     "$<$<CXX_COMPILER_ID:Clang>:-Wsometimes-uninitialized>"
     "$<$<CXX_COMPILER_ID:Clang>:-Wno-c++11-narrowing>"
     "$<$<CXX_COMPILER_ID:Clang>:-Wno-error=local-type-template-args>"

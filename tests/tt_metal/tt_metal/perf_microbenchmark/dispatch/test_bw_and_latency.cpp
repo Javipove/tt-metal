@@ -149,6 +149,12 @@ void init(int argc, char** argv) {
 
 #define CACHE_LINE_SIZE 64
 void nt_memcpy(uint8_t* __restrict dst, const uint8_t* __restrict src, size_t n) {
+    #if !defined(__x86_64__)
+
+    memcpy(dst, src, n);
+    tt_driver_atomics::sfence();
+
+#else
     size_t num_lines = n / CACHE_LINE_SIZE;
 
     size_t i;
@@ -167,6 +173,7 @@ void nt_memcpy(uint8_t* __restrict dst, const uint8_t* __restrict src, size_t n)
     if (num_lines > 0) {
         tt_driver_atomics::sfence();
     }
+#endif
 }
 
 int main(int argc, char** argv) {

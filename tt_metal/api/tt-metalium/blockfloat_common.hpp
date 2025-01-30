@@ -7,7 +7,10 @@
 #include <iostream>
 #include <random>
 #include <vector>
+
+#if defined(__x86_64__)
 #include <immintrin.h>
+#endif
 
 #include "assert.hpp"
 #include "tt_backend_api_types.hpp"
