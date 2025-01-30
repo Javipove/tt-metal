@@ -15,7 +15,7 @@
 #include <vector>
 
 #include "env_lib.hpp"
-#include "dispatch_constants.hpp"
+#include "dispatch_settings.hpp"
 #include "command_queue_interface.hpp"
 #include "device_command.hpp"
 #include "lock_free_queue.hpp"
@@ -162,7 +162,7 @@ private:
     IDevice* device;
     SystemMemoryManager& manager;
     std::shared_ptr<TraceDescriptor>& descriptor;
-    std::array<uint32_t, DispatchConstants::DISPATCH_MESSAGE_ENTRIES>& expected_num_workers_completed;
+    std::array<uint32_t, DispatchSettings::DISPATCH_MESSAGE_ENTRIES>& expected_num_workers_completed;
     bool clear_count;
     NOC noc_index;
     CoreCoord dispatch_core;
@@ -174,7 +174,7 @@ public:
         SystemMemoryManager& manager,
         std::shared_ptr<TraceDescriptor>& descriptor,
         Buffer& buffer,
-        std::array<uint32_t, DispatchConstants::DISPATCH_MESSAGE_ENTRIES>& expected_num_workers_completed,
+        std::array<uint32_t, DispatchSettings::DISPATCH_MESSAGE_ENTRIES>& expected_num_workers_completed,
         NOC noc_index,
         CoreCoord dispatch_core);
 
