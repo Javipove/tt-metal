@@ -1,0 +1,6 @@
+. origin/main:08cb5ac2 dirty
+binutils origin/v6.0.0:c76f5ac4
+gcc :1f27bac6
+newlib origin/newlib-4.1.0:415fdd42
+riscv-dejagnu origin/riscv-dejagnu-1.6:4ea498a8
+qemu origin/v7.2.15:8ac75726

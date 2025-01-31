@@ -26,38 +26,39 @@ set(SFPI_x86_64_Linux_RELEASE
 )
 
 #extra elements for local SFPI
-set(SFPI_LOCAL_PATH "/home/ubuntu/Desktop/javier/tenstorrent_material/sfpi/build")
-set(SFPI_LOCAL_UNCOMPRESSED "/home/ubuntu/Desktop/javier/tenstorrent_material/sfpi/build/sfpi")
+#COPIED MANUALLY INTO /RUNTIME/SFPI
+#set(SFPI_LOCAL_PATH "/home/ubuntu/Desktop/javier/tenstorrent_material/sfpi/build")
+#set(SFPI_LOCAL_UNCOMPRESSED "/home/ubuntu/Desktop/javier/tenstorrent_material/sfpi/build/sfpi")
 set(SFPI_riscv64_Linux_RELEASE
 	"sfpi-release.tgz"
 	"941af970ad8540b1706e1eed768605e4"
 )
 
-if(DEFINED SFPI_${CMAKE_HOST_SYSTEM_PROCESSOR}_${CMAKE_HOST_SYSTEM_NAME}_RELEASE)
-    set(SFPI_RELEASE "${SFPI_${CMAKE_HOST_SYSTEM_PROCESSOR}_${CMAKE_HOST_SYSTEM_NAME}_RELEASE}")
-    list(GET SFPI_RELEASE 0 SFPI_FILE)
-    list(GET SFPI_RELEASE 1 SFPI_MD5)
-    #EXTRA ELEMENTS FOR LOCAL SFPI
-    set(SFPI_LOCAL_TAR "${SFPI_LOCAL_PATH}/${SFPI_FILE}")
-    #set(SFPI_LOCAL_MD5 "${SFPI_LOCAL_PATH}/${SFPI_MD5}.md5")
-
-    # if(EXISTS "${SFPI_LOCAL_TAR}"AND EXISTS "${SFPI_LOCAL_MD5}")
-    if(EXISTS "${SFPI_LOCAL_TAR}")	
-	message(STATUS "Using local SFPI packages from ${SFPI_LOCAL_TAR}")
-	#Extract the tarball is needed (assumes CMAKE 3.18+ for file (ARCHIVE_EXTRACT))
+#if(DEFINED SFPI_${CMAKE_HOST_SYSTEM_PROCESSOR}_${CMAKE_HOST_SYSTEM_NAME}_RELEASE)
+#    set(SFPI_RELEASE "${SFPI_${CMAKE_HOST_SYSTEM_PROCESSOR}_${CMAKE_HOST_SYSTEM_NAME}_RELEASE}")
+#    list(GET SFPI_RELEASE 0 SFPI_FILE)
+#   list(GET SFPI_RELEASE 1 SFPI_MD5)
+#   #EXTRA ELEMENTS FOR LOCAL SFPI
+#   set(SFPI_LOCAL_TAR "${SFPI_LOCAL_PATH}/${SFPI_FILE}")
+#   #set(SFPI_LOCAL_MD5 "${SFPI_LOCAL_PATH}/${SFPI_MD5}.md5")
+#
+#   # if(EXISTS "${SFPI_LOCAL_TAR}"AND EXISTS "${SFPI_LOCAL_MD5}")
+#   if(EXISTS "${SFPI_LOCAL_TAR}")	
+#	message(STATUS "Using local SFPI packages from ${SFPI_LOCAL_TAR}")
+#	#Extract the tarball is needed (assumes CMAKE 3.18+ for file (ARCHIVE_EXTRACT))
 	set(SFPI_SOURCE_DIR "${PROJECT_SOURCE_DIR}/runtime/sfpi")
-	
-	file(MAKE_DIRECTORY "${SFPI_SOURCE_DIR}")
-	
-	execute_process(
-		COMMAND tar -xzf "${SFPI_LOCAL_TAR}" -C "${SFPI_SOURCE_DIR}"
-		RESULT_VARIABLE TAR_RESULT
-	)
-	if(NOT TAR_RESULT EQUAL 0)
-		message(FATAL_ERROR "Failed to extract the SFPI package")
-	endif()
-	
-
+#	
+#	file(MAKE_DIRECTORY "${SFPI_SOURCE_DIR}")
+#	
+#	execute_process(
+#		COMMAND tar -xzf "${SFPI_LOCAL_TAR}" -C "${SFPI_SOURCE_DIR}"
+#		RESULT_VARIABLE TAR_RESULT
+#	)
+#	if(NOT TAR_RESULT EQUAL 0)
+#		message(FATAL_ERROR "Failed to extract the SFPI package")
+#	endif()
+#	
+#
 	FetchContent_Declare(
 	sfpi
 	SOURCE_DIR ${SFPI_SOURCE_DIR}
@@ -70,12 +71,12 @@ if(DEFINED SFPI_${CMAKE_HOST_SYSTEM_PROCESSOR}_${CMAKE_HOST_SYSTEM_NAME}_RELEASE
 	#
 
 
-else()
-    	message(FATAL_ERROR "SFPI package not found in ${SFPI_LOCAL_PATH}")
-      endif()
- else()
- message(FATAL_ERROR "SFPI binaries for ${CMAKE_HOST_SYSTEM_PROCESSOR}-${CMAKE_HOST_SYSTEM_NAME} not available")
- endif()
+	#else()
+	#message(FATAL_ERROR "SFPI package not found in ${SFPI_LOCAL_PATH}")
+	#      endif()
+	#else()
+	#message(FATAL_ERROR "SFPI binaries for ${CMAKE_HOST_SYSTEM_PROCESSOR}-${CMAKE_HOST_SYSTEM_NAME} not available")
+	#endif()
 
 
 #if(DEFINED SFPI_${CMAKE_HOST_SYSTEM_PROCESSOR}_${CMAKE_HOST_SYSTEM_NAME}_RELEASE)

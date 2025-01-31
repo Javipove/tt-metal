@@ -1,7 +1,7 @@
 .cache
 .vscode
 .idea
-runtime
+#runtime
 *.log
 *.csv
 *.xlsx
@@ -26,7 +26,7 @@ coremodel/model/release/
 pipegen.yaml
 device_desc.yaml
 cluster_descriptor.yaml
-.umd/
+#.umd/
 /clean
 *coverage.txt
 blobgen_cmd_log

@@ -81,8 +81,8 @@ inline std::vector<float> unpack_bfp4_tiles_into_float_vec(
     const std::vector<uint32_t> mask_vec0 = {0xf, 0xf0, 0xf00, 0xf000};
     const std::vector<uint32_t> mask_vec1 = {0xf0000, 0xf00000, 0xf000000, 0xf0000000};
     const std::vector<uint32_t> shift_vec0 = {0, 4, 8, 12};
-if defined(__x86_64__)
     const std::vector<uint32_t> shift_vec1 = {16, 20, 24, 28};
+#if defined(__x86_64__)    
     const __m128i mask0 = _mm_loadu_si128(reinterpret_cast<const __m128i*>(mask_vec0.data()));
     const __m128i mask1 = _mm_loadu_si128(reinterpret_cast<const __m128i*>(mask_vec1.data()));
     const __m128i shift0 = _mm_loadu_si128(reinterpret_cast<const __m128i*>(shift_vec0.data()));
@@ -138,7 +138,7 @@ if defined(__x86_64__)
                         sub_word_index = ((tile_and_data_index - num_exponent_words_skip) >> data_dwords_per_exp_log2) &
                                          exp_bit_mask;  // Extract the byte in which the shared exponent is stored. Each
                                                         // byte is shared amongst 16 datums.
-if defined(__x86_64__)
+#if defined(__x86_64__)
                         __m256i exp_vector0 =
                             _mm256_set1_epi32(get_byte(exp_word, sub_word_index));  // Replicate exp scalar in a vector
                         __m256i exp_vector1 = exp_vector0;
