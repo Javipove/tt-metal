@@ -28,6 +28,7 @@ template <bool debug_sync = false >
 static inline void memcpy_to_device(void* __restrict dst, const void* __restrict src, size_t n) {
     TT_ASSERT((uintptr_t)dst % MEMCPY_ALIGNMENT == 0);
 
+/*
     static constexpr uint32_t inner_loop = 8;
 #if defined(__x86_64__) || defined(__i386__)
     static constexpr uint32_t inner_blk_size = inner_loop * sizeof(__m256i);
@@ -122,9 +123,18 @@ static inline void memcpy_to_device(void* __restrict dst, const void* __restrict
             }
         }
     }
+*/
+
+//std::cout << "memcpy_to_device(0x" << std::hex << dst << ", 0x" << std::hex << src << ", 0x" << std::hex << n << ")\n";
+
+// The C++ variant
+std::memcpy(dst, src, n);
+
     if constexpr (debug_sync){
 	  tt_driver_atomics::sfence();
     }
+__asm volatile("fence iorw, iorw" ::: "memory");
+
 }
 
 } // namespace tt::tt_metal
