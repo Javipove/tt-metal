@@ -143,6 +143,7 @@ int main(int argc, char** argv) {
     // This is the OG constexpr uint32_t memcpy_alignment = sizeof(sizeof(float);*8);
     #else
     constexpr uint32_t memcpy_alignment = sizeof(__m256i);
+#endif
     std::size_t addr_align = memcpy_alignment;
 
     try {
@@ -226,7 +227,7 @@ int main(int argc, char** argv) {
             }
             if (copy_mode >= 2 && copy_mode <= 4) {
                 TT_ASSERT(
-                    transfer_size % (INNER_LOOP * 8)) == 0,
+                    transfer_size % (INNER_LOOP * 8) == 0,
                     "Each copy to hugepage must be mod32==0 when using nt_memcpy");
             } else if (copy_mode >= 5 && copy_mode <= 7) {
                 TT_ASSERT(

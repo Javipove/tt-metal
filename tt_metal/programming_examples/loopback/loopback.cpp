@@ -1,111 +1,173 @@
 // SPDX-FileCopyrightText: © 2023 Tenstorrent Inc.
 //
 // SPDX-License-Identifier: Apache-2.0
+//
 
+
+//ADDED
+#include <iostream>
+//
 #include <tt-metalium/host_api.hpp>
 #include <tt-metalium/device.hpp>
 #include <tt-metalium/bfloat16.hpp>
 
 /*
- * 1. Host writes data to buffer in DRAM
- * 2. dram_copy kernel on logical core {0, 0} BRISC copies data from buffer
- *      in step 1. to buffer in L1 and back to another buffer in DRAM
- * 3. Host reads from buffer written to in step 2.
- */
+* 1. Host writes data to buffer in DRAM
+* 2. dram_copy kernel on logical core {0, 0} BRISC copies data from buffer
+*      in step 1. to buffer in L1 and back to another buffer in DRAM
+* 3. Host reads from buffer written to in step 2.
+*/
 
 using namespace tt::tt_metal;
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
+    std::cout << "We entered the program" << std::endl;
+
     if (getenv("TT_METAL_SLOW_DISPATCH_MODE") != nullptr) {
         TT_THROW("Test not supported w/ slow dispatch, exiting");
     }
 
+    
+    std::cout << "We made the slow distpatch" << std::endl;
+    
     bool pass = true;
+	
+   const uint32_t golden_value = 0x123456 ;
+
+    std::cout << "We try the setup" << std::endl;
 
     try {
         /*
-         * Silicon accelerator setup
-         */
+        * Silicon accelerator setup
+        */
         constexpr int device_id = 0;
-        IDevice* device = CreateDevice(device_id);
+		IDevice *device =
+            CreateDevice(device_id);
 
         /*
-         * Setup program and command queue to execute along with its buffers and kernels to use
-         */
+        * Setup program and command queue to execute along with its buffers and kernels to use
+        */
         CommandQueue& cq = device->command_queue();
         Program program = CreateProgram();
 
-        constexpr CoreCoord core = {0, 0};
+	constexpr CoreCoord core = {0, 0};
+
+    std::cout << "Kernel Handle" << std::endl;
 
         KernelHandle dram_copy_kernel_id = CreateKernel(
             program,
             "tt_metal/programming_examples/loopback/kernels/loopback_dram_copy.cpp",
             core,
-            DataMovementConfig{.processor = DataMovementProcessor::RISCV_0, .noc = NOC::RISCV_0_default});
+            DataMovementConfig{.processor = DataMovementProcessor::RISCV_0, .noc = NOC::RISCV_0_default}
+        );
 
-        constexpr uint32_t single_tile_size = 2 * (32 * 32);
+        constexpr uint32_t single_tile_size = 2 * (32 * 32);      
         constexpr uint32_t num_tiles = 50;
+      	//constexpr uint32_t num_tiles = 50;
         constexpr uint32_t dram_buffer_size = single_tile_size * num_tiles;
 
         tt::tt_metal::InterleavedBufferConfig dram_config{
-            .device = device,
-            .size = dram_buffer_size,
-            .page_size = dram_buffer_size,
-            .buffer_type = tt::tt_metal::BufferType::DRAM};
+                    .device= device,
+                    .size = dram_buffer_size,
+                    .page_size = dram_buffer_size,
+                    .buffer_type = tt::tt_metal::BufferType::DRAM
+        };
         tt::tt_metal::InterleavedBufferConfig l1_config{
-            .device = device,
-            .size = dram_buffer_size,
-            .page_size = dram_buffer_size,
-            .buffer_type = tt::tt_metal::BufferType::L1};
+                    .device= device,
+                    .size = dram_buffer_size,
+                    .page_size = dram_buffer_size,
+                    .buffer_type = tt::tt_metal::BufferType::L1
+        };
+
+    std::cout << "L1 buffer create" << std::endl;
 
         auto l1_buffer = CreateBuffer(l1_config);
 
+    std::cout << "Input DRAM buffer create" << std::endl;
         auto input_dram_buffer = CreateBuffer(dram_config);
         const uint32_t input_dram_buffer_addr = input_dram_buffer->address();
 
+    std::cout << "Output DRAM buffer create" << std::endl;
         auto output_dram_buffer = CreateBuffer(dram_config);
         const uint32_t output_dram_buffer_addr = output_dram_buffer->address();
 
+      
         // Since all interleaved buffers have size == page_size, they are entirely contained in the first DRAM bank
         const uint32_t input_bank_id = 0;
         const uint32_t output_bank_id = 0;
 
+
         /*
-         * Create input data and runtime arguments, then execute
-         */
+        * Create input data and runtime arguments, then execute
+        */
         std::vector<uint32_t> input_vec = create_random_vector_of_bfloat16(
-            dram_buffer_size, 100, std::chrono::system_clock::now().time_since_epoch().count());
+           dram_buffer_size, 100, std::chrono::system_clock::now().time_since_epoch().count());
+	//std::vector<uint32_t> input_vec =  
+	
+	//	 std::vector<uint32_t> input_vec;
+//	 for(uint64_t i = 0; i < dram_buffer_size/4; i++){
+//	 	input_vec.push_back(i*4);
+//	 }
+       std::cout << "Enque buffer" << std::endl;
+
         EnqueueWriteBuffer(cq, input_dram_buffer, input_vec, false);
 
         const std::vector<uint32_t> runtime_args = {
             l1_buffer->address(),
             input_dram_buffer->address(),
             input_bank_id,
+	    //static_cast<uint32_t>(input_dram_buffer->noc_coordinates().x),
+            //static_cast<uint32_t>(input_dram_buffer->noc_coordinates().y),
             output_dram_buffer->address(),
             output_bank_id,
-            l1_buffer->size()};
+	    //static_cast<uint32_t>(output_dram_buffer->noc_coordinates().x),       
+	    //static_cast<uint32_t>(output_dram_buffer->noc_coordinates().y),
+	    l1_buffer->size(),
+	    golden_value,
+       	    
+       	};
 
-        SetRuntimeArgs(program, dram_copy_kernel_id, core, runtime_args);
+        SetRuntimeArgs(
+            program,
+            dram_copy_kernel_id,
+            core,
+            runtime_args
+        );
 
-        EnqueueProgram(cq, program, false);
-        Finish(cq);
-
+    std::cout << "Enqueue the program" << std::endl;
+		EnqueueProgram(cq, program, false);
+		std::cout << "We finished the enqueuing of the program" << std::endl;
+	     	Finish(cq);
+		std::cout << "We start validation and Teardown" << std::endl;
         /*
-         * Validation & Teardown
-         */
-        std::vector<uint32_t> result_vec;
-        EnqueueReadBuffer(cq, output_dram_buffer, result_vec, true);
+        * Validation & Teardown
+        */
+   	std::vector<uint32_t> result_vec;
+
+	std::cout << "We enqueue reading the buffer" << std::endl;
+
+       	EnqueueReadBuffer(cq, output_dram_buffer, result_vec, true);
+
+	std::cout << "We finished reading the buffer" << std::endl;
 
         pass &= input_vec == result_vec;
 
+	tt::log_info(tt::LogTest, "vectors equal = {}", pass);
+
         pass &= CloseDevice(device);
+	
+	tt::log_info(tt::LogTest, "CloseDevice = {}", pass);
 
-    } catch (const std::exception& e) {
-        tt::log_error(tt::LogTest, "Test failed with exception!");
-        tt::log_error(tt::LogTest, "{}", e.what());
-
-        throw;
-    }
+	
+	for(uint64_t i = 0; i < result_vec.size(); i++){
+		tt::log_info(tt::LogTest,"[{}] expected: {}, result: {}", i, input_vec[i], result_vec[i]);
+	}
+        
+	} catch (const std::exception &e) {
+		tt::log_error(tt::LogTest, "Test failed with exception!");
+		tt::log_error(tt::LogTest, "{}", e.what());
+		throw;
+	 }
 
     if (pass) {
         tt::log_info(tt::LogTest, "Test Passed");
@@ -113,5 +175,9 @@ int main(int argc, char** argv) {
         TT_THROW("Test Failed");
     }
 
+    // Error out with non-zero return code if we don't detect a pass
+	 // TT_FATAL(pass);
+ 
     return 0;
 }
+

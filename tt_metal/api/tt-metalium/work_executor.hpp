@@ -175,8 +175,10 @@ public:
                 cv.notify_one();
             }
             // Wait for queue empty, i.e. flush command picked up
-            while (not this->worker_queue.empty()) {
-                std::this_thread::sleep_for(std::chrono::microseconds(10));
+            while (not this->worker_queue.empty()) 
+	    {
+            __asm volatile("fence" ::: "memory");
+		    std::this_thread::sleep_for(std::chrono::microseconds(10));
             };
         }
     }
